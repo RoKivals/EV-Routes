@@ -141,7 +141,20 @@ obj/
 hs_err_pid*
 
 ## Plugin-specific files:
+.idea/
+*.iml
+build/
+.gradle/
+local.properties
+*.apk
+*.aab
 
+# Jetpack Compose
+/.compose-cache/
+
+# Локальные файлы
+*.log
+.DS_Store
 # mpeltonen/sbt-idea plugin
 .idea_modules/
 
