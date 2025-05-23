@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 import uvicorn
 
-from routers import auth, user, station, route
+from server.gateway.src.routers import auth, route
+from server.gateway.src.routers import user, station
 
 logging.basicConfig(
     level=logging.INFO,
