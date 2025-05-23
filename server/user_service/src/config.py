@@ -8,3 +8,5 @@ class CfgBase(ABC):
 
 class PostgresCfg(CfgBase):
     url: str = os.getenv("DATABASE_URL")
+
+postgres = PostgresCfg()
