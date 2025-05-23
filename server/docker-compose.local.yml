@@ -2,73 +2,74 @@ version: '3.8'
 
 services:
   gateway:
-    build: ./
+    build: ./gateway
     container_name: gateway
     ports:
       - "8001:8001"
     depends_on:
-      - mongodb
+      - postgres
     environment:
       DATABASE_URL: postgresql+asyncpg://fastapi:secret@postgres:5432/fastapi_dev
     restart: unless-stopped
 
   auth_service:
-    build: ./
+    build: ./auth_service
     container_name: auth_service
     ports:
       - "8002:8002"
     depends_on:
-      - mongodb
+      - postgres
     environment:
       DATABASE_URL: postgresql+asyncpg://fastapi:secret@postgres:5432/fastapi_dev
     restart: unless-stopped
 
   data_service:
-    build: ./
+    build: ./data_service
     container_name: data_service
     ports:
       - "8003:8003"
     depends_on:
-      - mongodb
+      - postgres
     environment:
       DATABASE_URL: postgresql+asyncpg://fastapi:secret@postgres:5432/fastapi_dev
     restart: unless-stopped
 
   route_service:
-    build: ./
+    build: ./route_service
     container_name: route_service
     ports:
       - "8004:8004"
     depends_on:
-      - mongodb
+      - postgres
     environment:
       DATABASE_URL: postgresql+asyncpg://fastapi:secret@postgres:5432/fastapi_dev
     restart: unless-stopped
 
   station_service:
-    build: ./
+    build: ./station_service
     container_name: station_service
     ports:
       - "8005:8005"
     depends_on:
-      - mongodb
+      - postgres
     environment:
       DATABASE_URL: postgresql+asyncpg://fastapi:secret@postgres:5432/fastapi_dev
     restart: unless-stopped
 
   user_service:
-    build: ./
+    build: ./user_service
     container_name: user_service
     ports:
       - "8006:8006"
     depends_on:
-      - mongodb
+      - postgres
     environment:
       DATABASE_URL: postgresql+asyncpg://fastapi:secret@postgres:5432/fastapi_dev
     restart: unless-stopped
 
   postgres:
     image: postgres:15-alpine
+    container_name: postgres
     environment:
       POSTGRES_USER: fastapi
       POSTGRES_PASSWORD: secret
