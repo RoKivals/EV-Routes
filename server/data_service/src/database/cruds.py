@@ -27,5 +27,16 @@ async def add_cars(db: AsyncSession, cars: list[CarCreate]) -> list[int]:
     await db.flush()
     return car_objects
 
-async def get_car(db: AsyncSession) -> CarGet:
-    pass
+async def get_car_by_name(db: AsyncSession, name: str) -> CarGet | None:
+    stmt = select(Car).where(Car.name == name)
+
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
+
+async def get_car(db: AsyncSession, id: int) -> CarGet | None:
+    stmt = select(Car).where(Car.id == id)
+
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
