@@ -3,11 +3,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.database import get_db
 from database.models import Base
 from EV_cars import parse_ev_cars
+from database.init_db import init_models
+from contextlib import asynccontextmanager
+from database import cruds
+from database.schemas import CarCreate
 
-#TODO Base.metadata.create_all() я не помню где и как в этой структуре делать
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        print("Starting up")
+        await init_models()  # Код стартапа
+        yield
+    finally:
+        print("Shutting down...")
 
-@app.on_event("startup")
-async def startup():
-    await init_models()
+app = FastAPI(lifespan=lifespan)
+
+
+@app.post("/cars", response_model=CarCreate)
+async def add_car(car: CarCreate, db: AsyncSession = Depends(get_db)):
+    return await cruds.add_car(db, car)
