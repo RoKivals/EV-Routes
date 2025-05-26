@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from database import cruds
 from database.schemas import UserCreate, UserGet, UserLogin
 from auth.auth import authenticate_user, create_access_token
+from config import ServiceLogger
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,9 +22,11 @@ async def lifespan(app: FastAPI):
         print("Shutting down...")
 
 app = FastAPI(lifespan=lifespan, title="EV Route User Service")
+logger = ServiceLogger()
 
 @app.post("/register", response_model=UserGet, status_code=status.HTTP_201_CREATED)
 async def add_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
+    logger.info("")
     return await cruds.add_user(db, user)
 
 @app.post("/login", response_model=UserGet)

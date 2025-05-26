@@ -2,8 +2,6 @@ from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timedelta, timezone
 
-from jose import jwt
-
 from database.schemas import UserInDB, TokenData
 from database import cruds
 
