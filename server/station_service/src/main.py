@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
     finally:
         print("Shutting down...")
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, title="EV Route Station Service")
 
 
 @app.post("/station", response_model=StationCreate, status_code=status.HTTP_201_CREATED)

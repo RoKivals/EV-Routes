@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
     finally:
         print("Shutting down...")
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, title="EV Route User Service")
 
 @app.post("/register", response_model=UserGet, status_code=status.HTTP_201_CREATED)
 async def add_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
@@ -41,6 +41,6 @@ async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
 async def get_user(login: str, db: AsyncSession = Depends(get_db)):
     return await cruds.get_user(db, login)
 
-@app.patch("/user/car", response_model=UserGet)
+@app.patch("/user/car", response_model=UserGet, status_code=status.HTTP_202_ACCEPTED)
 async def update_car(login: str, new_car: int, db: AsyncSession = Depends(get_db)):
     return await cruds.update_user_car(db, login, new_car)
