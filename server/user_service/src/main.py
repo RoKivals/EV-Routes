@@ -1,11 +1,11 @@
-from fastapi import FastAPI, Depends, status
+from fastapi import FastAPI, Depends, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.database import get_db
 from database.init_db import init_models
 from contextlib import asynccontextmanager
 from database import cruds
-from database.schemas import UserCreate, UserGet
-
+from database.schemas import UserCreate, UserGet, UserLogin
+from auth.auth import authenticate_user, create_access_token
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,10 +23,19 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 @app.post("/register", response_model=UserGet, status_code=status.HTTP_201_CREATED)
-async def add_user(user: UserCreate, db: AsyncSession = Depends(get_db))
+async def add_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     return await cruds.add_user(db, user)
 
-#@app.post("/login")
+@app.post("/login", response_model=UserGet)
+async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
+    user = await authenticate_user(db, user_data.login, user_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect login or password",
+        )
+    access_token = create_access_token(data={"sub": user.login})
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/user", response_model=UserGet)
 async def get_user(login: str, db: AsyncSession = Depends(get_db)):

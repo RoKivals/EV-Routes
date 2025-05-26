@@ -20,10 +20,15 @@ async def add_user(db: AsyncSession, user: UserCreate) -> UserGet:
                    login=new_user.login,
                    car_id=new_user.car_id)
 
+
+async def get_db_user(db: AsyncSession, login: str) -> UserInDB | None:
+    stmt = select(User).where(User.login == login)
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
 async def get_user(db: AsyncSession, login: str) -> UserGet | None:
     stmt = select(User).where(User.login == login)
     result = await db.execute(stmt)
-
     return result.scalar_one_or_none()
 
 async def update_user_car(db: AsyncSession, login: int, new_car: int | None) -> UserGet:
@@ -35,11 +40,9 @@ async def update_user_car(db: AsyncSession, login: int, new_car: int | None) -> 
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
     user.car_id = new_car
-
     await db.flush()
 
     return UserGet(
         id=user.id,
         login=user.login,
-        car_id=user.car_id
-    )
+        car_id=user.car_id)
