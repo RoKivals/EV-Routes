@@ -13,4 +13,4 @@ class StationGet(BaseModel):
     latitude: float
     longtitude: float
     connection_type: str
-    power_kw: int | None
+    power_kw: int | None = None
