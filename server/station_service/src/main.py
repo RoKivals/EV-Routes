@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
             result = await session.execute(select(Station).limit(1))
             existing = result.scalar_one_or_none()
 
-            if True:
+            if existing is None:
                 print("Станции не найдены. Загружаем из API...")
                 origin_stations = all_stations_info()
                 await cruds.add_stations(session, origin_stations)
@@ -57,6 +57,6 @@ async def add_station(station: StationCreate, db: AsyncSession = Depends(get_db)
 async def add_statios(stations: list[StationCreate], db: AsyncSession = Depends(get_db)):
     return await cruds.add_stations(db, stations)
 
-@app.get("/stations", response_model=StationGet)
+@app.get("/stations", response_model=list[StationGet])
 async def get_stations(db: AsyncSession = Depends(get_db)):
     return await cruds.get_all_stations(db)

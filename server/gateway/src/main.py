@@ -3,9 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 import uvicorn
-
-from server.gateway.src.routers import auth, route
-from server.gateway.src.routers import user, station
+from routers import auth, route, user, station
 
 logging.basicConfig(
     level=logging.INFO,
