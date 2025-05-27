@@ -22,7 +22,7 @@ def save_user(data: UserData):
         ON CONFLICT (email) DO UPDATE SET
             car_model = EXCLUDED.car_model,
             battery_capacity = EXCLUDED.battery_capacity,
-            connector_type = EXCLUDED.connector_type
+            connector_type = EXCLUDED.conector_type
         """,
         (data.email, data.car_model, data.battery_capacity, data.connector_type)
     )

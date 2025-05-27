@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.database import get_db
 from EV_cars import parse_ev_cars
@@ -12,17 +13,17 @@ from database.schemas import CarCreate, CarGet
 async def lifespan(app: FastAPI):
     try:
         print("Starting up")
-        app.add_middleware(
-            allow_methods=["GET", "POST"],
-            allow_origins=["*"]
-        )
         await init_models()
         yield
     finally:
         print("Shutting down...")
 
 app = FastAPI(lifespan=lifespan, title="EV Route Car Service")
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_methods=["GET", "POST"],
+    allow_origins=["*"]
+)
 
 @app.post("/car", response_model=CarCreate, status_code=status.HTTP_201_CREATED)
 async def add_car(car: CarCreate, db: AsyncSession = Depends(get_db)):
@@ -32,7 +33,7 @@ async def add_car(car: CarCreate, db: AsyncSession = Depends(get_db)):
 async def add_cars(cars: list[CarCreate], db: AsyncSession = Depends(get_db)):
     return await cruds.add_cars(db, cars)
 
-@app.get("/car", response_model=CarGet)
+@app.get("/car", response_model=list[CarGet])
 async def get_car_by_name(name: str, db: AsyncSession = Depends(get_db)):
     return await cruds.get_car_by_name(db, name)
 
@@ -40,6 +41,6 @@ async def get_car_by_name(name: str, db: AsyncSession = Depends(get_db)):
 async def get_car(car_id: int, db: AsyncSession = Depends(get_db)):
     return await cruds.get_car(db, car_id)
 
-@app.get("/cars", response_model=CarGet)
+@app.get("/cars", response_model=list[CarGet])
 async def get_cars(db: AsyncSession = Depends(get_db)):
     return await cruds.get_all_cars(db)
