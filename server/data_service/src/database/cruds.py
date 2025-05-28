@@ -1,5 +1,6 @@
 from database.schemas import CarCreate, CarGet
 from database.models import Car
+from fastapi import HTTPException
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -33,15 +34,18 @@ async def get_all_cars(db: AsyncSession) -> list[CarGet]:
     result = await db.execute(stmt)
     return result.scalars().all()
 
-async def get_car_by_name(db: AsyncSession, name: str) -> CarGet | None:
+async def get_car_by_name(db: AsyncSession, name: str) -> list[CarGet] | None:
     stmt = select(Car).where(Car.name == name)
 
     result = await db.execute(stmt)
-    return result.scalar_one_or_none()
+    return result.scalars().all()
 
 async def get_car(db: AsyncSession, id: int) -> CarGet | None:
     stmt = select(Car).where(Car.id == id)
 
     result = await db.execute(stmt)
-    return result.scalar_one_or_none()
+    car = result.scalar_one_or_none()
+    if car is None:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    return car
 

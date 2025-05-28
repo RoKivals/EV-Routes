@@ -31,5 +31,5 @@ async def add_stations(db: AsyncSession, stations: list[StationCreate]) -> list[
 async def get_all_stations(db: AsyncSession) -> list[StationGet]:
     stmt = select(Station)
 
-    result = await db.execute(stmt)
+    result = await db.execute(statement=stmt)
     return result.scalars().all()
