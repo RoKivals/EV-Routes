@@ -3,10 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.database import get_db
 from EV_cars import parse_ev_cars
+from database.database import get_db
+
 from database.init_db import init_models
 from contextlib import asynccontextmanager
 from database import cruds
 from database.schemas import CarCreate, CarGet
+
 
 
 @asynccontextmanager
@@ -14,6 +17,24 @@ async def lifespan(app: FastAPI):
     try:
         print("Starting up")
         await init_models()
+
+        db_gen = get_db()
+        session = await anext(db_gen)
+        try:
+
+            if True:
+                print("Машины не найдены. Загружаем из API...")
+                cars = parse_ev_cars()
+                await cruds.add_cars(session, cars)
+                await session.commit()
+            else:
+                print("Станции уже есть, пропускаем.")
+        except Exception as e:
+            await session.rollback()
+            print(str(e))
+            raise e
+        finally:
+            await db_gen.aclose()
         yield
     finally:
         print("Shutting down...")
