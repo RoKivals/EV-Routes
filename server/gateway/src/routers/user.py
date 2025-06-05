@@ -8,21 +8,21 @@ router = APIRouter()
 async def add_user(request: Request):
     body = await request.body()
     async with httpx.AsyncClient() as client:
-        response = await client.post(f"{SERVICES['auth']}/register", content=body, headers=request.headers)
+        response = await client.post(f"{SERVICES['user']}/register", content=body, headers=request.headers)
         return response.json()
 
 @router.post("/login")
 async def login(request: Request):
     body = await request.body()
     async with httpx.AsyncClient() as client:
-        response = await client.post(f"{SERVICES['auth']}/login", content=body, headers=request.headers)
+        response = await client.post(f"{SERVICES['user']}/login", content=body, headers=request.headers)
         return response.json()
 
 @router.get("/user_by_login")
 async def get_user_by_login(request: Request):
     query_params = str(request.query_params)
     async with httpx.AsyncClient() as client:
-        request_url = f"{SERVICES['auth']}/user"
+        request_url = f"{SERVICES['user']}/user"
         if query_params:
             request_url += f"?{query_params}"
 
@@ -34,5 +34,5 @@ async def get_user_by_login(request: Request):
 async def update_user_car(request: Request):
     body = await request.body()
     async with httpx.AsyncClient() as client:
-        response = await client.post(f"{SERVICES['auth']}/user/car", content=body, headers=request.headers)
+        response = await client.post(f"{SERVICES['user']}/user/car", content=body, headers=request.headers)
         return response.json()
