@@ -18,7 +18,7 @@ async def login(request: Request):
         response = await client.post(f"{SERVICES['station']}/stations", content=body, headers=request.headers)
         return response.json()
 
-@router.get("/all_stations")
+@router.get(path="/all_stations")
 async def get_user_by_login(request: Request):
     query_params = str(request.query_params)
     async with httpx.AsyncClient() as client:

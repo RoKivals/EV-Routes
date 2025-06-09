@@ -7,7 +7,7 @@ from sqlalchemy.future import select
 async def add_station(db: AsyncSession, station: StationCreate) -> Station:
     new_station = Station(name=station.name,
                     latitude=station.latitude,
-                    longtitude=station.longtitude, 
+                    longitude=station.longtitude, 
                     connection_type=station.connection_type,
                     power_kw=station.power_kw)
     db.add(new_station)
@@ -18,7 +18,7 @@ async def add_stations(db: AsyncSession, stations: list[StationCreate]) -> list[
     station_objects = [
                 Station(name=station.name,
                     latitude=station.latitude,
-                    longtitude=station.longtitude, 
+                    longitude=station.longtitude, 
                     connection_type=station.connection_type,
                     power_kw=station.power_kw)
             for station in stations

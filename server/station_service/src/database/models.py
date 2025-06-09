@@ -10,6 +10,6 @@ class Station(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, index=True, nullable=False)
     latitude: Mapped[float] = mapped_column(Float, index=True, nullable=False)
-    longtitude: Mapped[float] = mapped_column(Float, index=True, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, index=True, nullable=False)
     connection_type: Mapped[str] = mapped_column(String, index=True, nullable=False)
     power_kw: Mapped[int] = mapped_column(__name_pos=Integer, nullable=True)

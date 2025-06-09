@@ -3,7 +3,7 @@ from database.schemas import StationCreate
 import os
 
 API_BASE_URL = "https://api.openchargemap.io/v3"
-API_KEY = "0693cf5e-35eb-460b-acb3-585ca9dd2547" #os.getenv("API_KEY")
+API_KEY = os.getenv("API_KEY")
 
 URL_PARAMS = {
         'output': 'json',
@@ -21,6 +21,7 @@ def get_ref_data_base_params():
     response.raise_for_status()
     data = response.json()
     
+    print(data)
     conn_types = data['ConnectionTypes']
     countries = data['Countries']
     return conn_types, countries
@@ -50,7 +51,7 @@ def get_use_info_from_json(station: dict) -> StationCreate:
     address_info = station['AddressInfo']
     name = address_info['Title']
     latitude = address_info['Latitude']
-    longtitude = address_info['Longitude']
+    longitude = address_info['Longitude']
     connections_info = station['Connections']
     
     for connection in connections_info:
@@ -62,7 +63,7 @@ def get_use_info_from_json(station: dict) -> StationCreate:
 
     return StationCreate(name=name,
                         latitude=latitude,
-                        longtitude=longtitude, 
+                        longitude=longitude, 
                         connection_type=connection_type,
                         power_kw=power_kw
                         )
@@ -75,6 +76,4 @@ def all_stations_info():
     return stations
 
 if __name__ == '__main__':
-    stations = all_stations_info()
-
-    print(stations)
+    get_ref_data_base_params()

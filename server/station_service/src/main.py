@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import func
 
 from database.database import get_db
 from database import cruds
@@ -12,35 +13,53 @@ from stations import all_stations_info
 from database.init_db import init_models
 from contextlib import asynccontextmanager
 
+async def initialize_stations():
+    """Инициализация станций в базе данных при первом запуске"""
+    async for session in get_db():
+        try:
+            result = await session.execute(select(func.count(Station.id)))
+            count = result.scalar()
+            
+            if count == 0:
+                print("База данных пуста. Загружаем станции из API...")
+                origin_stations = all_stations_info()
+                
+                if origin_stations:
+                    await cruds.add_stations(session, origin_stations)
+                    await session.commit()
+                    print(f"Успешно загружено {len(origin_stations)} станций")
+                else:
+                    print("Не удалось получить данные о станциях из API")
+            else:
+                print(f"В базе данных уже есть {count} станций. Пропускаем инициализацию.")
+                
+        except Exception as e:
+            await session.rollback()
+            print(f"Ошибка при инициализации станций: {str(e)}")
+            raise
+        finally:
+            break
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        print("Starting up")
+        print("Запуск приложения...")
+        
+        # Инициализация моделей БД
         await init_models()
-
-        db_gen = get_db()
-        session = await anext(db_gen)
-        try:
-            result = await session.execute(select(Station).limit(1))
-            existing = result.scalar_one_or_none()
-
-            if existing is None:
-                print("Станции не найдены. Загружаем из API...")
-                origin_stations = all_stations_info()
-                await cruds.add_stations(session, origin_stations)
-                await session.commit()
-            else:
-                print("Станции уже есть, пропускаем.")
-        except Exception as e:
-            await session.rollback()
-            print(str(e))
-            raise e
-        finally:
-            await db_gen.aclose()
+        print("Модели базы данных инициализированы")
+        
+        # Инициализация данных
+        await initialize_stations()
+        
+        print("Приложение успешно запущено")
         yield
+        
+    except Exception as e:
+        print(f"Ошибка при запуске приложения: {str(e)}")
+        raise
     finally:
-        print("Shutting down...")
+        print("Завершение работы приложения...")
 
 app = FastAPI(lifespan=lifespan, title="EV Route Station Service")
 app.add_middleware(

@@ -4,14 +4,9 @@ from config import SERVICES
 
 router = APIRouter()
 
-@router.get("/get_extra_stations")
-async def add_car(request: Request):
-    query_params = str(request.query_params)
+@router.post("/distance_between_points")
+async def add_station(request: Request):
+    body = await request.body()
     async with httpx.AsyncClient() as client:
-        request_url = f"{SERVICES['route']}/get_path"
-        if query_params:
-            request_url += f"?{query_params}"
-
-        response = await client.get(request_url)
-        response.raise_for_status()
+        response = await client.post(f"{SERVICES['route']}/distance_between_points", content=body, headers=request.headers)
         return response.json()

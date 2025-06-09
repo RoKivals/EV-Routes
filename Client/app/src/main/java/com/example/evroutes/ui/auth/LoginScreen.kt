@@ -86,7 +86,10 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
 
         if (uiState.token != null) {
             LaunchedEffect(uiState.token) {
-                // TODO: Перейти на главный экран или сохранить токен
+                navController.navigate("map") {
+                    // Очистка стека навигации, чтобы нельзя было вернуться на экран входа
+                    popUpTo("login") { inclusive = true }
+                }
                 viewModel.resetState()
             }
         }

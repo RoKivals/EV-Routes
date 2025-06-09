@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 app = FastAPI(title="EV Route Planner Gateway")
-
+include_routes(app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,10 +25,11 @@ app.add_middleware(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Gateway server is starting...")
-    include_routes(app)
+
+    for route in app.routes:
+        print(f"{route.path} [{', '.join(route.methods)}]")
     yield
     logger.info("Gateway server is shutting down...")
-
 
 if __name__ == "__main__":
     logger.info("Running with Uvicorn at http://0.0.0.0:8000")
