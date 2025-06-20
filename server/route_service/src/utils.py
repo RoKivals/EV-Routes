@@ -3,6 +3,8 @@ from dataclasses import dataclass
 import requests
 from database.schemas import StationGet
 
+import os
+
 import geopandas as gpd
 from shapely.geometry import LineString, Point, MultiPoint
 from shapely.ops import nearest_points
@@ -36,6 +38,32 @@ def get_road_distance(point_a: MapPoint, point_b: MapPoint) -> float:
     print(response)
     distance_km = response["routes"][0]["distance"] / 1000
     return distance_km
+
+def get_coordinates(api_key: str, location_name: str) -> tuple[float, float] | None:
+    base_url = "https://geocode-maps.yandex.ru/1.x/"
+    params = {
+        "apikey": os.getenv(api_key),
+        "geocode": location_name,
+        "format": "json",
+        "results": 1
+    }
+    
+    try:
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        if data["response"]["GeoObjectCollection"]["featureMember"]:
+            geo_object = data["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+            pos = geo_object["Point"]["pos"].split()
+            longitude, latitude = float(pos[0]), float(pos[1])
+            return latitude, longitude
+            
+    except Exception as e:
+        print(f"Ошибка при обработке ответа: {e}")
+    
+    return None
 
 def get_close_stations_to_route(point_a: MapPoint, point_b: MapPoint, stations: list[StationGet], radius_search: int = 90_000) -> list[StationGet]:
     if not stations:
