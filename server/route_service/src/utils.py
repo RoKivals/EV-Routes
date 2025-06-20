@@ -6,8 +6,7 @@ from database.schemas import StationGet
 import os
 
 import geopandas as gpd
-from shapely.geometry import LineString, Point, MultiPoint
-from shapely.ops import nearest_points
+from shapely.geometry import LineString
 
 from heapq import heappush, heappop
 from dataclasses import dataclass

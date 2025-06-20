@@ -210,11 +210,11 @@ fun RouteDialog(
                         }
                     },
                     label = { Text("Средний расход") },
-                    placeholder = { Text("кВт⋅ч/100км") },
+                    placeholder = { Text("Вт⋅ч/100км") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    supportingText = { Text("Расход электроэнергии в кВт⋅ч на 100 км") }
+                    supportingText = { Text("Расход электроэнергии в Вт⋅ч на 100 км") }
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
