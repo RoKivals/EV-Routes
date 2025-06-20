@@ -95,131 +95,120 @@ class MapViewModel(
         }
     }
 
-    private fun buildMoscowToSpbRoute(consumption: Float) {
-        val drivingRouter: DrivingRouter = DirectionsFactory.getInstance().createDrivingRouter(
-            DrivingRouterType.ONLINE)
-
-        // Определяем точки маршрута
-        val requestPoints = listOf(
-            RequestPoint(
-                Point(55.751574, 37.573856), // Москва (стартовая точка)
-                RequestPointType.WAYPOINT,
-                null, null, null
-            ),
-            RequestPoint(
-                Point(57.03216, 34.98807), // Первая промежуточная точка
-                RequestPointType.WAYPOINT,
-                null, null, null
-            ),
-            RequestPoint(
-                Point(58.75839, 31.50041), // Вторая промежуточная точка
-                RequestPointType.WAYPOINT,
-                null, null, null
-            ),
-            RequestPoint(
-                Point(59.93428, 30.33514), // Санкт-Петербург (конечная точка)
-                RequestPointType.WAYPOINT,
-                null, null, null
+private fun buildRoute(startPoint, endPoint, consumption: Float, initialBattery: Float, minBatteryPercent: Float) {
+    // Параметры запроса
+    val request = RouteRequest(
+        start = Coordinates(startPoint.latitude, startPoint.longitude),
+        end = Coordinates(endPoint.latitude, endPoint.longitude),
+        initial_battery = initialBattery,
+        min_battery_percent = minBatteryPercent,
+        consumption_per_km = consumption,
+        charging_stations = getPredefinedChargingStations() // Предопределенные станции
+    )
+    
+    _uiState.value = _uiState.value.copy(isLoading = true)
+    
+    routeService.calculateRoute(request).enqueue(object : Callback<RouteResponse> {
+        override fun onResponse(call: Call<RouteResponse>, response: Response<RouteResponse>) {
+            if (response.isSuccessful && response.body()?.success == true) {
+                val routeResponse = response.body()!!
+                
+                // Обновляем UI
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = null,
+                    routeInfo = "Расстояние: ${routeResponse.total_distance} км, " +
+                              "Финальный заряд: ${routeResponse.final_battery}%"
+                )
+                
+                // Отображаем маршрут на карте
+                displayOptimizedRoute(routeResponse)
+                
+                // Рассчитываем расход энергии
+                calculateEnergyConsumption(routeResponse.total_distance, consumption)
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Ошибка сервера: ${response.errorBody()?.string()}"
+                )
+            }
+        }
+        
+        override fun onFailure(call: Call<RouteResponse>, t: Throwable) {
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                error = "Ошибка сети: ${t.message}"
             )
-        )
-
-        // Настройки для маршрута
-        val drivingOptions = DrivingOptions().apply {
-            // Можно настроить опции маршрутизации
-            routesCount = 1 // Строим только один маршрут
         }
+    })
+}
 
-        // Настройки транспортного средства (для электромобиля)
-        val vehicleOptions = VehicleOptions().apply {
-            // Здесь можно указать параметры электромобиля
-            // vehicleType = VehicleType.ELECTRIC (если доступно)
+private fun displayOptimizedRoute(routeResponse: RouteResponse) {
+    mapView?.map?.let { map ->
+        map.mapObjects.clear()
+        val mapObjectCollection = map.mapObjects.addCollection()
+        
+        // Рисуем маршрут
+        val points = routeResponse.path_coordinates.map { Point(it.lat, it.lon) }
+        mapObjectCollection.addPolyline(points).apply {
+            setStrokeColor(0xFF0066FF.toInt())
+            setStrokeWidth(5.0f)
         }
-
-        // Строим маршрут
-        val drivingSession = drivingRouter.requestRoutes(
-            requestPoints,
-            drivingOptions,
-            vehicleOptions,
-            object : DrivingSession.DrivingRouteListener {
-                override fun onDrivingRoutes(routes: MutableList<DrivingRoute>) {
-                    // Успешно построен маршрут
-                    if (routes.isNotEmpty()) {
-                        val route = routes[0]
-
-                        // Обновляем состояние UI
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = null
-                        )
-
-                        // Добавляем маршрут на карту
-                        addRouteToMap(route)
-
-                        // Вычисляем расход энергии для маршрута
-                        calculateEnergyConsumption(route, consumption)
-
-                    } else {
-                        _uiState.value = _uiState.value.copy(
-                            error = "Не удалось построить маршрут",
-                            isLoading = false
-                        )
-                    }
-                }
-
-                override fun onDrivingRoutesError(error: com.yandex.runtime.Error) {
-                    _uiState.value = _uiState.value.copy(
-                        error = "Ошибка построения маршрута: ${error.toString()}",
-                        isLoading = false
-                    )
+        
+        // Добавляем маркеры
+        points.forEachIndexed { index, point ->
+            mapObjectCollection.addPlacemark().apply {
+                geometry = point
+                when {
+                    index == 0 -> setIcon(ImageProvider.fromBitmap(createCircleBitmap(Color.GREEN, 40)))
+                    index == points.size - 1 -> setIcon(ImageProvider.fromBitmap(createCircleBitmap(Color.RED, 40)))
+                    routeResponse.charging_stations.any { it.id == index } -> 
+                        setIcon(ImageProvider.fromBitmap(createChargingStationBitmap(Color.BLUE, 35)))
+                    else -> setIcon(ImageProvider.fromBitmap(createCircleBitmap(Color.YELLOW, 30)))
                 }
             }
-        )
+        }
+        
+        // Центрируем камеру
+        val boundingBox = BoundingBox.builder()
+            .include(points)
+            .build()
+        map.move(CameraPosition(boundingBox), Animation(Animation.Type.SMOOTH, 1f))
     }
+}
 
-    private fun addRouteToMap(route: DrivingRoute) {
-        mapView?.map?.let { map ->
-            map.mapObjects.clear()
+// Интерфейс для API
+interface RouteService {
+    @POST("calculate_route")
+    fun calculateRoute(@Body request: RouteRequest): Call<RouteResponse>
+}
 
-            val mapObjectCollection = map.mapObjects.addCollection()
+// Модели данных
+data class RouteRequest(
+    val start: Coordinates,
+    val end: Coordinates,
+    val initial_battery: Float,
+    val min_battery_percent: Float,
+    val consumption_per_km: Float,
+    val charging_stations: List<ChargingStation>
+)
 
-            mapObjectCollection.addPolyline(route.geometry).apply {
-                setStrokeColor(0xFF0066FF.toInt()) // или Color.BLUE
-                setStrokeWidth(5.0f)
-            }
+data class RouteResponse(
+    val success: Boolean,
+    val total_distance: Float,
+    val path_coordinates: List<Coordinates>,
+    val charging_stations: List<ChargingStation>,
+    val final_battery: Float
+)
 
-            val points = listOf(
-                Point(55.751574, 37.573856), // Москва
-                Point(57.03216, 34.98807),   // Промежуточная 1
-                Point(58.75839, 31.50041),   // Промежуточная 2
-                Point(59.93428, 30.33514)    // СПб
-            )
+data class Coordinates(val lat: Double, val lon: Double)
 
-            points.forEachIndexed { index, point ->
-                mapObjectCollection.addPlacemark().apply {
-                    geometry = point
-                    when (index) {
-                        0 -> {
-                            // Стартовая точка - зеленый круг
-                            setIcon(ImageProvider.fromBitmap(createCircleBitmap(Color.GREEN, 40)))
-                        }
-                        points.size - 1 -> {
-                            // Конечная точка - красный круг
-                            setIcon(ImageProvider.fromBitmap(createCircleBitmap(Color.RED, 40)))
-                        }
-                        else -> {
-                            // Промежуточные точки - желтый круг
-                            setIcon(ImageProvider.fromBitmap(createCircleBitmap(Color.YELLOW, 35)))
-                        }
-                    }
-                }
-            }
-
-            // Центрируем камеру
-            val centerPoint = Point(57.5, 34.0)
-            val cameraPosition = CameraPosition(centerPoint, 6.0f, 0.0f, 0.0f)
-            map.move(cameraPosition)
-        }
-    }
+data class ChargingStation(
+    val id: Int,
+    val lat: Double,
+    val lon: Double,
+    val name: String
+)
 
     // Вспомогательная функция для создания цветного круга
     private fun createCircleBitmap(color: Int, size: Int): Bitmap {

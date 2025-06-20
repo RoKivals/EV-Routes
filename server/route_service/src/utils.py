@@ -85,7 +85,7 @@ def modified_dijkstra(start, end, initial_battery, min_battery_percent,
         if isinstance(current_state.position, tuple):
             pos_key = current_state.position
         else:
-            pos_key = get_station_coordinates(current_state.position, charging_stations)
+            pos_key = tuple(current_state.position)
             
         state_key = (pos_key, round(current_state.battery_level, 1))
         
@@ -96,9 +96,9 @@ def modified_dijkstra(start, end, initial_battery, min_battery_percent,
         # Проверяем, можем ли добраться до цели напрямую
         current_pos = current_state.position
         if not isinstance(current_pos, tuple):
-            current_pos = get_station_coordinates(current_pos, charging_stations)
+            current_pos = tuple(current_pos)
             
-        dist_to_end = distance(current_pos, end)
+        dist_to_end = get_road_distance(current_pos, end)
         battery_needed_to_end = dist_to_end * consumption_per_km
         
         # Если можем добраться до цели с достаточным запасом
@@ -107,18 +107,18 @@ def modified_dijkstra(start, end, initial_battery, min_battery_percent,
             return {
                 'success': True,
                 'total_distance': current_cost + dist_to_end,
-                'path_coordinates': [start] + [get_station_coordinates(sid, charging_stations) 
+                'path_coordinates': [start] + [tuple(sid.position) 
                                              for sid in current_state.path] + [end],
                 'charging_stations': current_state.path,
                 'final_battery': final_battery
             }
         
         # Ищем ближайшие заправочные станции
-        nearby_stations = get_nearby_stations(current_pos, charging_stations)
+        nearby_stations = get_close_stations_to_route(point_a=start, point_b=end, stations=charging_stations)
         
         for station in nearby_stations:
             station_pos = (station['lat'], station['lon'])
-            dist_to_station = distance(current_pos, station_pos)
+            dist_to_station = get_road_distance(current_pos, station_pos)
             battery_needed_to_station = dist_to_station * consumption_per_km
             
             # Проверяем, можем ли добраться до станции с минимальным запасом
