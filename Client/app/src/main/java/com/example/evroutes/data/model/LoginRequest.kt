@@ -1,6 +1,6 @@
 package com.example.evroutes.data.model
 
 data class LoginRequest(
-    val email: String,
+    val login: String,
     val password: String
 )

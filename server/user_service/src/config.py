@@ -1,7 +1,6 @@
 import os
 from abc import ABC
-from dataclasses import asdict, dataclass
-
+from dataclasses import asdict
 
 class CfgBase(ABC):
     dict: callable = asdict

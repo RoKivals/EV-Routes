@@ -6,11 +6,12 @@ import com.example.evroutes.data.model.RegisterRequest
 import com.example.evroutes.data.model.RegisterResponse
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.GET
 
-interface AuthApiService {
-    @POST("/user/login")
+interface MapApiService {
+    @GET("/station/all_stations")
     suspend fun login(@Body request: LoginRequest): LoginResponse
 
-    @POST("/user/register")
+    @POST("/auth/register")
     suspend fun register(@Body request: RegisterRequest): RegisterResponse
 }

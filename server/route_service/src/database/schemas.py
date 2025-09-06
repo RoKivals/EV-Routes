@@ -1,12 +1,5 @@
 from pydantic import BaseModel
 
-class StationCreate(BaseModel):
-    name: str
-    latitude: float
-    longitude: float
-    connection_type: str
-    power_kw: int | None
-
 class StationGet(BaseModel): 
     id: int
     name: str
@@ -14,3 +7,11 @@ class StationGet(BaseModel):
     longitude: float
     connection_type: str
     power_kw: int | None = None
+
+class MapPoint(BaseModel):
+    latitude: float
+    longitude: float
+
+    def __iter__(self):
+        yield self.latitude
+        yield self.longitude
