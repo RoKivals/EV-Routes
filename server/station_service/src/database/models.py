@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, Float
+from sqlalchemy import String, Integer, Float, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 class Base(DeclarativeBase):
@@ -13,3 +13,7 @@ class Station(Base):
     longitude: Mapped[float] = mapped_column(Float, index=True, nullable=False)
     connection_type: Mapped[str] = mapped_column(String, index=True, nullable=False)
     power_kw: Mapped[int] = mapped_column(__name_pos=Integer, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint('latitude', 'longitude', name='location'),
+    )
