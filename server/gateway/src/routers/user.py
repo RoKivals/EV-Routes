@@ -1,36 +1,38 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
-import psycopg2
+from fastapi import APIRouter, Request
+import httpx
+from config import SERVICES
 
 router = APIRouter()
 
-conn = psycopg2.connect(dbname="evroutesuserinfo", user="roki", password="roki", host="localhost")
-cursor = conn.cursor()
+@router.post("/register")
+async def add_user(request: Request):
+    body = await request.body()
+    async with httpx.AsyncClient() as client:
+        response = await client.post(f"{SERVICES['user']}/register", content=body, headers=request.headers)
+        return response.json()
 
-class UserData(BaseModel):
-    email: str
-    car_model: str
-    battery_capacity: float
-    connector_type: str
+@router.post("/login")
+async def login(request: Request):
+    body = await request.body()
+    async with httpx.AsyncClient() as client:
+        response = await client.post(f"{SERVICES['user']}/login", content=body, headers=request.headers)
+        return response.json()
 
-@router.post("/")
-def save_user(data: UserData):
-    cursor.execute(
-        """
-        INSERT INTO users (email, car_model, battery_capacity, connector_type)
-        VALUES (%s, %s, %s, %s)
-        ON CONFLICT (email) DO UPDATE SET
-            car_model = EXCLUDED.car_model,
-            battery_capacity = EXCLUDED.battery_capacity,
-            connector_type = EXCLUDED.connector_type
-        """,
-        (data.email, data.car_model, data.battery_capacity, data.connector_type)
-    )
-    conn.commit()
-    return {"status": "saved"}
+@router.get("/user_by_login")
+async def get_user_by_login(request: Request):
+    query_params = str(request.query_params)
+    async with httpx.AsyncClient() as client:
+        request_url = f"{SERVICES['user']}/user"
+        if query_params:
+            request_url += f"?{query_params}"
 
-@router.get("/{email}")
-def get_user(email: str):
-    cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
-    row = cursor.fetchone()
-    return row
+        response = await client.get(request_url)
+        response.raise_for_status()
+        return response.json()
+    
+@router.get("/user_change_car")
+async def update_user_car(request: Request):
+    body = await request.body()
+    async with httpx.AsyncClient() as client:
+        response = await client.post(f"{SERVICES['user']}/user/car", content=body, headers=request.headers)
+        return response.json()

@@ -1,0 +1,4 @@
+SQLAlchemy
+fastapi[standard]
+requests
+asyncpg

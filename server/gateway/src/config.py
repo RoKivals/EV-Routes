@@ -1,10 +1,6 @@
-import os
-from abc import ABC
-from dataclasses import asdict, dataclass
-
-
-class CfgBase(ABC):
-    dict: callable = asdict
-
-class PostgresCfg(CfgBase):
-    url: str = os.getenv("DATABASE_URL")
+SERVICES = {
+    "user": "http://user_service:8006",
+    "station": "http://station_service:8005",
+    "route": "http://route_service:8004",
+    "data": "http://data_service:8003",
+}

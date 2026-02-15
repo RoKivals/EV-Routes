@@ -16,14 +16,13 @@ class UserInDB(BaseModel):
 class UserGet(BaseModel):
     id: int
     login: str
-    car_id: str | None
+    car_id: int | None
+
+class AccessToken(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
 
 class TokenData(BaseModel):
     sub: str
     exp: datetime | None = None
     scopes: list[str] = []
-
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.timestamp()  # Для корректной сериализации в JSON
-        }

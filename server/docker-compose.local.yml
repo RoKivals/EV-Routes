@@ -7,18 +7,8 @@ services:
     ports:
       - "8001:8001"
     depends_on:
-      - postgres
-    environment:
-      DATABASE_URL: postgresql+asyncpg://fastapi:secret@postgres:5432/fastapi_dev
-    restart: unless-stopped
-
-  auth_service:
-    build: ./auth_service
-    container_name: auth_service
-    ports:
-      - "8002:8002"
-    depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgresql+asyncpg://fastapi:secret@postgres:5432/fastapi_dev
     restart: unless-stopped
@@ -29,7 +19,8 @@ services:
     ports:
       - "8003:8003"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgresql+asyncpg://fastapi:secret@postgres:5432/fastapi_dev
     restart: unless-stopped
@@ -40,7 +31,8 @@ services:
     ports:
       - "8004:8004"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgresql+asyncpg://fastapi:secret@postgres:5432/fastapi_dev
     restart: unless-stopped
@@ -51,8 +43,10 @@ services:
     ports:
       - "8005:8005"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
+      API_KEY: 0693cf5e-35eb-460b-acb3-585ca9dd2547
       DATABASE_URL: postgresql+asyncpg://fastapi:secret@postgres:5432/fastapi_dev
     restart: unless-stopped
 
@@ -62,8 +56,10 @@ services:
     ports:
       - "8006:8006"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
+      SECRET_KEY: Bc-1ZXSm_MehZgkiDSRm70sLZHCM5wlgTQegWqg3LsbOK5sd2cc4KHGc0dNqY5egfMLm2YYo5vnl1m3uMMxB8w==
       DATABASE_URL: postgresql+asyncpg://fastapi:secret@postgres:5432/fastapi_dev
     restart: unless-stopped
 
@@ -79,5 +75,13 @@ services:
     ports:
       - "5432:5432"
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fastapi -d fastapi_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 volumes:
   postgres_data:
+  
